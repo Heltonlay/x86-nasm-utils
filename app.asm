@@ -1,22 +1,16 @@
 extern _ExitProcess@4
+%include "./input/scanText.asm"
+%include "./output/print.asm"
 %include "./utils/intToText.asm"
-%include "./utils/print.asm"
 %include "./utils/textToInt.asm"
 
 global _main
 
-section .data
-    test:   db "68"
-
 section .text
 _main:
-    push test
-    call textToInt
+    call scanText
 
-    push eax
-    call intToText
-
-    push 4
+    push edx
     push eax
     call print
 

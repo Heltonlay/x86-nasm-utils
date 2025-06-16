@@ -1,5 +1,6 @@
 global textToInt
 
+section .text
 textToInt:
     mov ebx, [esp+4]            ;   pointer to text
 

@@ -1,6 +1,5 @@
 extern _VirtualAlloc@16
 extern _VirtualFree@12
-
 global intToText
 
 section .text
@@ -16,7 +15,7 @@ intToText:                          ;   returns pointer to string
     mov esi, eax                    ;   returned pointer
 
     cmp eax, 0
-    je handleException              ;   handle exception sending NULL if _VirtualAlloc fails
+    je .handleException              ;   handle exception sending NULL if _VirtualAlloc fails
 
     push 0x04                       ;   PAGE_READWRITE
     push 0x1000                     ;   MEM_COMMIT
@@ -26,7 +25,7 @@ intToText:                          ;   returns pointer to string
     mov edi, eax                    ;   returned pointer
 
     cmp eax, 0
-    je handleException              ;   handle exception sending NULL if _VirtualAlloc fails
+    je .handleException              ;   handle exception sending NULL if _VirtualAlloc fails
 
     mov ecx, 0                      ;   prepare counter
     mov eax, [esp+4]                ;   int parameter
@@ -79,6 +78,6 @@ intToText:                          ;   returns pointer to string
     mov eax, edi
     ret 4
 
-handleException:
+.handleException:
     mov eax, 0
     ret 4
