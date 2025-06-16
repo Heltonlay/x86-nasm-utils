@@ -1,33 +1,16 @@
 extern _VirtualAlloc@16
 extern _VirtualFree@12
 
-global intToAscii
-
-section .data
-    ermsg:    db "err"
+global intToText
 
 section .text
 ;   parameters:
 ;   value:      the int to convert to ascii text
 
-intToAscii:                         ;   returns pointer to string
-    ; we will be first counting the digits for correct allocation size in bytes
-    mov ecx, 0                      ;   prepare counter
-    mov eax, [esp+4]                ;   int parameter
-
-    .countDigitsLoop:
-        mov edx, 0
-        mov ebx, 10
-        div ebx                     ;   eax / 10
-        inc ecx
-        cmp eax, 0
-        jg .countDigitsLoop
-
-    mov ebx, ecx
-
+intToText:                          ;   returns pointer to string
     push 0x04                       ;   PAGE_READWRITE
-    push 0x00001000                 ;   MEM_COMMIT
-    push ebx                        ;   alloc number of counted digits
+    push 0x1000                     ;   MEM_COMMIT
+    push 16                         ;   alloc 16 bytes
     push 0                          ;   system choses address
     call _VirtualAlloc@16
     mov esi, eax                    ;   returned pointer
@@ -36,8 +19,8 @@ intToAscii:                         ;   returns pointer to string
     je handleException              ;   handle exception sending NULL if _VirtualAlloc fails
 
     push 0x04                       ;   PAGE_READWRITE
-    push 0x00001000                 ;   MEM_COMMIT
-    push ebx                        ;   alloc number of counted digits
+    push 0x1000                     ;   MEM_COMMIT
+    push 16                         ;   alloc 16 bytes
     push 0                          ;   system choses address
     call _VirtualAlloc@16
     mov edi, eax                    ;   returned pointer
