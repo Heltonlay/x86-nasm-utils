@@ -1,5 +1,6 @@
 extern _VirtualAlloc@16
 extern _VirtualFree@12
+
 global intToText
 
 section .text
@@ -70,7 +71,7 @@ intToText:                          ;   returns pointer to string
         cmp ebx, 0
         jge .revertOrderLoop        ;   order fix loop
 
-    push 0x00008000                 ;   MEM_RELEASE
+    push 0x8000                 ;   MEM_RELEASE
     push 0
     push esi                        ;   address to release
     call _VirtualFree@12            ;   releases first allocation. We will no longer need it

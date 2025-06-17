@@ -1,9 +1,10 @@
 extern _GetStdHandle@4
 extern _WriteFile@20
-global print
+
+global printText
 
 section .text
-print:
+printText:
     mov ebx, [esp+4]            ;   message
     mov ecx, [esp+8]            ;   length
     
