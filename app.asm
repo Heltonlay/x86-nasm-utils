@@ -6,7 +6,7 @@ extern intToText
 global _main
 
 section .data
-value1:             dd  1526.667
+value1:             dd  0.9
 acc:                dd  0
 intRound:           dd  0
 breakLine:          db  0xA
@@ -14,7 +14,7 @@ controlWord:        dw  0
 
 rawBinary:          dd  0
 biasedExponent:     db  0
-exponent:           db  0
+exponent:           dd  0
 significand:        dd  0
 integer:            dd  0
 fraction:           dd  0
@@ -77,12 +77,12 @@ _main:
     and eax, 0x7F80_0000
     shr eax, 23
     sub eax, 127
-    mov [exponent], al
+    mov [exponent], eax
 
     push expTxtLen
     push expTxt
     call printText
-
+    
     push dword [exponent]
     call printInt
 
@@ -114,21 +114,28 @@ _main:
     fld st0
     frndint                             ;   round value in st0 to int
     fstp dword [intRound]
+
+    .intZero:
+        mov eax, 0
+        jmp .intFinal
+
     mov eax, [intRound]
     and eax, 0x807F_FFFF
     or eax, 0x80_0000
 
     mov bl, [exponent]
     cmp bl, 0
-    je .skipShift
-    .shiftIntLeft:
+    je .skipRot
+    jl .intZero
+    .rotIntLeft:
         rol eax, 1
         dec bl
         cmp bl, 0
-        jg .shiftIntLeft
-    .skipShift:
+        jg .rotIntLeft
+    .skipRot:
 
     ror eax, 23
+    .intFinal:
     mov [integer], eax
 
     push intTxtLen
@@ -148,11 +155,18 @@ _main:
     mov bl, [exponent]
     cmp bl, 0
     je .skipFracShift
+    jl .shiftFracRight
     .shiftFracLeft:
         shl eax, 1
         dec bl
         cmp bl, 0
         jg .shiftFracLeft
+        jmp .skipFracShift
+    .shiftFracRight:
+        shr eax, 1
+        inc bl
+        cmp bl, 0
+        jg .shiftFracRight
     .skipFracShift:
 
     and eax, 0x7F_FFFF                  ;   remove exponent digits
