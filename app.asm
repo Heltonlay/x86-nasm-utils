@@ -15,19 +15,19 @@ significand:    dd  0
 integer:        dd  0
 fraction:       dd  0
 
-biasExpTxt:     db  "biased exponent: "
-biasExpTxtLen:  equ $ - biasExpTxt
-expTxt:         db  "unbiased exponent: "
-expTxtLen:      equ $ - expTxt
-sigTxt:         db  "significand with J-bit: "
-sigTxtLen:      equ $ - sigTxt
-intTxt:         db  "integer: "
-intTxtLen:      equ $ - intTxt
-fracTxt:        db  "fraction: "
-fracTxtLen:     equ $ - fracTxt
-floatToTxt:     db  "float ascii representation: "
-floatToTxtLen:  equ $ - floatToTxt
-decimalPoint:   db  "."
+biasExpTxt:         db  "biased exponent: "
+biasExpTxtLen:      equ $ - biasExpTxt
+expTxt:             db  "unbiased exponent: "
+expTxtLen:          equ $ - expTxt
+sigTxt:             db  "significand with J-bit: "
+sigTxtLen:          equ $ - sigTxt
+intTxt:             db  "integer: "
+intTxtLen:          equ $ - intTxt
+fracTxt:            db  "fraction: "
+fracTxtLen:         equ $ - fracTxt
+decimalToTxt:       db  "decimal representation: "
+decimalToTxtLen:    equ $ - decimalToTxt
+decimalPoint:       db  "."
 
 section .text
 _main:
@@ -157,9 +157,9 @@ _main:
     push breakLine
     call printText
 
-    ;   float representation
-    push floatToTxtLen
-    push floatToTxt
+    ;   decimal representation
+    push decimalToTxtLen
+    push decimalToTxt
     call printText
 
     push dword [integer]
