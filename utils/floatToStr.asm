@@ -8,9 +8,8 @@ originalValue:      dd  0
 fpuRoundedInt:      dd  0
 fpuControlWord:     dw  0
 
-exponent:           dd  0
+exponent:           db  0
 integer:            dd  0
-fraction:           dd  0
 result:             dd  0
 counter:            db  0
 
@@ -25,8 +24,8 @@ floatToStr:
     mov eax, dword [originalValue]
     and eax, 0x7F80_0000
     shr eax, 23
-    sub eax, 127
-    mov [exponent], eax
+    sub al, 127
+    mov [exponent], al
 
     ;   integer
     fnstcw [fpuControlWord]                ;   load control word
@@ -40,8 +39,8 @@ floatToStr:
     and eax, 0x807F_FFFF
     or eax, 0x80_0000
 
-    mov ebx, [exponent]
-    cmp ebx, 0
+    mov bl, [exponent]
+    cmp bl, 0
     je .skipRot
     jg .rotIntLeft
     .intZero:
@@ -49,8 +48,8 @@ floatToStr:
         jmp .intFinal
     .rotIntLeft:
         rol eax, 1
-        dec ebx
-        cmp ebx, 0
+        dec bl
+        cmp bl, 0
         jg .rotIntLeft
     .skipRot:
 
@@ -58,52 +57,10 @@ floatToStr:
     .intFinal:
     mov [integer], eax
 
-    ;   fraction
-    mov eax, dword [originalValue]
-    and eax, 0x7F_FFFF
-    or eax, 0x80_0000
-
-    mov ebx, [exponent]
-    cmp ebx, 0
-    je .skipFracShift
-    jl .shiftFracRight
-    .shiftFracLeft:
-        shl eax, 1
-        dec ebx
-        cmp ebx, 0
-        jg .shiftFracLeft
-        jmp .skipFracShift
-    .shiftFracRight:
-        shr eax, 1
-        inc ebx
-        cmp ebx, 0
-        jl .shiftFracRight
-    .skipFracShift:
-
-    mov esi, 1_000_000_000              ;   must be shifted right every iteration
-    mov edi, 0x80_0000                  ;   logical AND for adding up to final result
-    mov ecx, 0
-
-    .loopFractionAsWhole:
-        inc ecx
-        cmp ecx, 10                     ;   nine iterations. Next iteration would result in a division by 2 with remainder
-        jg .breakFractionAsWhole
-        shr esi, 1
-        shr edi, 1
-        mov ebx, eax
-        and ebx, edi
-        cmp ebx, 0
-        je .loopFractionAsWhole
-        add [fraction], esi
-        jmp .loopFractionAsWhole
-    .breakFractionAsWhole:
-
-    add dword [fraction], 1_000_000_000
-
     ;   decimal representation
     push 0x04                       ;   PAGE_READWRITE
     push 0x1000                     ;   MEM_COMMIT
-    push 32                         ;   alloc 32 bytes
+    push 64                         ;   alloc 32 bytes
     push 0                          ;   system choses address
     call _VirtualAlloc@16
     mov [result], eax               ;   returned pointer
@@ -118,6 +75,14 @@ floatToStr:
     mov ebx, [result]
     mov [counter], ebx
     mov edx, ebx
+
+    mov ebx, [originalValue]
+    and ebx, 0x8000_0000
+    cmp ebx, 0
+    je .moveIntByte
+    mov byte [edx], 45
+    inc edx
+
     .moveIntByte:
         mov bl, byte [eax]
         mov byte [edx], bl          ;   copy ascii byte into value pointed by result
@@ -133,8 +98,28 @@ floatToStr:
     mov [counter], edx
 
     ;   third step is adding up the fractional part
-    push dword [fraction]
+    mov eax, dword [originalValue]
+    and eax, 0x7F_FFFF
+    mov cl, [exponent]
+    test cl, cl
+    jns .skipNegate
+    or eax, 0x80_0000
+    neg cl
+    shr eax, cl
+    jmp .skipPositive
+    .skipNegate:
+    shl eax, cl
+    .skipPositive:
+    and eax, 0x7F_FFFF
+    shl eax, 9
+    mov ebx, 100_000_000
+
+    mul ebx
+    
+    add edx, 100_000_000
+    push edx
     call intToText
+
     inc eax
 
     mov edx, [counter]
@@ -146,6 +131,75 @@ floatToStr:
         mov [counter], edx
         cmp byte [eax], 0
         jne .moveFracByte
+
+    mov eax, dword [originalValue]
+    and eax, 0x7F_FFFF
+    mov cl, [exponent]
+    test cl, cl
+    jns .skipNegate2
+    or eax, 0x80_0000
+    neg cl
+    shr eax, cl
+    jmp .skipPositive2
+    .skipNegate2:
+    shl eax, cl
+    .skipPositive2:
+    and eax, 0x7F_FFFF
+    shl eax, 9
+    mov ebx, 100_000_000
+
+    mul ebx
+    mul ebx
+    
+    add edx, 100_000_000
+    push edx
+    call intToText
+    inc eax
+
+    mov edx, [counter]
+    .moveFracByte2:
+        mov bl, byte [eax]
+        mov byte [edx], bl
+        inc eax
+        inc edx
+        mov [counter], edx
+        cmp byte [eax], 0
+        jne .moveFracByte2
+
+    mov eax, dword [originalValue]
+    and eax, 0x7F_FFFF
+    mov cl, [exponent]
+    test cl, cl
+    jns .skipNegate3
+    or eax, 0x80_0000
+    neg cl
+    shr eax, cl
+    jmp .skipPositive3
+    .skipNegate3:
+    shl eax, cl
+    .skipPositive3:
+    and eax, 0x7F_FFFF
+    shl eax, 9
+    mov ebx, 100_000_000
+
+    mul ebx
+    mul ebx
+    mul ebx
+    
+    add edx, 100_000_000
+    push edx
+    call intToText
+    inc eax
+
+    mov edx, [counter]
+    .moveFracByte3:
+        mov bl, byte [eax]
+        mov byte [edx], bl
+        inc eax
+        inc edx
+        mov [counter], edx
+        cmp byte [eax], 0
+        jne .moveFracByte3
 
     mov eax, [result]
     ret
